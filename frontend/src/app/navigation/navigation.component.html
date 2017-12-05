@@ -1,0 +1,8 @@
+<div class="list">
+    <a class="list-item" routerLink="">
+        <span>Home</span>
+    </a>
+    <a class="list-item" routerLink="{{ item.slug }}" *ngFor="let item of items">
+        <span>{{ item.title.rendered }}</span>
+    </a>
+</div>

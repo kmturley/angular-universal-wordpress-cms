@@ -1,0 +1,12 @@
+<RoutingRules>
+    <RoutingRule>
+        <Condition>
+            <KeyPrefixEquals>lazy/nested2</KeyPrefixEquals>
+            <HttpErrorCodeReturnedEquals>404</HttpErrorCodeReturnedEquals>
+        </Condition>
+        <Redirect>
+            <ReplaceKeyPrefixWith>lazy/nested</ReplaceKeyPrefixWith>
+            <HttpRedirectCode>307</HttpRedirectCode>
+        </Redirect>
+    </RoutingRule>
+</RoutingRules>
