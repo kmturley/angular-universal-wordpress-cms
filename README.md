@@ -19,9 +19,13 @@ Enable permalinks by going to:
 
     http://localhost:8080/wp-admin/options-permalink.php
 
-Then setting Custom Structure to be:
+Setting Custom Structure to be:
 
-    /%postname%/
+    /%category%/%postname%/
+
+Setting Category Base to be:
+
+    .
 
 
 ## Usage
@@ -39,6 +43,7 @@ And use the Wordpress API at:
 
 Ensure you have just backend and mysql running:
 
+    docker-compose stop
     docker-compose up backend mysql
 
 In a second terminal window, generate a static build using a base href command:
@@ -51,8 +56,9 @@ In a second terminal window, generate a static build using a base href command:
 
 ## Directory structure
 
-    frontend/                       --> Frontend sources files
-    frontend/static.paths.ts         --> Static generation from Wordpress API
+    frontend/                               --> Frontend sources files
+    frontend/static.paths.ts                --> Static generation for Wordpress API
+    frontend/app/app-routing.server.ts      --> Angular routing for Wordpress API
 
 
 ## Contact

@@ -22,11 +22,7 @@ export class NavigationComponent implements OnInit {
         this.items = this.routeService.routes;
         const routerConfig = this.router.config;
         this.items.forEach(route => {
-            routerConfig.push({
-                pathMatch: 'full',
-                path: route.link.slice(this.root.length + 1, -1),
-                loadChildren: './lazy/lazy.module#LazyModule'
-            });
+            routerConfig.push(route);
         });
         console.log('getRoutes', routerConfig);
         this.router.resetConfig(routerConfig);
