@@ -46,12 +46,20 @@ Ensure you have just backend and mysql running:
     docker-compose stop
     docker-compose up backend mysql
 
-In a second terminal window, generate a static build using a base href command:
+In a second terminal window, generate a static build:
+
+    npm run build:prerender
+
+Or build with custom base url:
 
     cd frontend
     ng build --prod --base-href http://angular-universal-example.s3-website-us-east-1.amazonaws.com
     ng build --prod --app 1 --output-hashing=false --base-href http://angular-universal-example.s3-website-us-east-1.amazonaws.com
     npm run webpack:server && npm run generate:prerender
+
+To view the statically generated version locally use:
+
+    npm run serve:prerender
 
 
 ## Directory structure
