@@ -9,6 +9,8 @@ services:
       - 8080:80
     environment:
       WORDPRESS_DB_PASSWORD: example
+    volumes:
+      - ./backend/wp-content:/var/www/html/wp-content
 
   mysql:
     image: mysql:5.7
