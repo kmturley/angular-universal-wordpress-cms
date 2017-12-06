@@ -18,19 +18,20 @@ export class AppRoutingService {
     private http: Http
   ) { }
 
-  addRoutes(items, inNav) {
+  addRoutes(items) {
     items.forEach(route => {
       let path = route.link.slice(this.root.length + 1, -1);
+      let type = route.type ? route.type : route.taxonomy
       if (path.startsWith('./')) {
         path = path.slice(2);
       }
       this.routes.push({
           pathMatch: 'full',
           path: path,
-          loadChildren: './lazy/lazy.module#LazyModule',
+          loadChildren: './' + type + '/' + type + '.module#' + type.charAt(0).toUpperCase() + type.slice(1) + 'Module',
           data: {
-            nav: inNav,
-            title: route.title ? route.title.rendered : route.name
+            title: route.title ? route.title.rendered : route.name,
+            type: type
           }
       });
     });
@@ -41,15 +42,15 @@ export class AppRoutingService {
       this.http.get(this.root + '/wp-json/wp/v2/pages')
         .toPromise()
         .then(res => {
-          this.addRoutes(res.json(), true);
+          this.addRoutes(res.json());
           this.http.get(this.root + '/wp-json/wp/v2/categories')
             .toPromise()
             .then(res => {
-              this.addRoutes(res.json(), false);
+              this.addRoutes(res.json());
               this.http.get(this.root + '/wp-json/wp/v2/posts')
                 .toPromise()
                 .then(res => {
-                  this.addRoutes(res.json(), false);
+                  this.addRoutes(res.json());
                   resolve(this.routes);
                 }, reject);
             }, reject);

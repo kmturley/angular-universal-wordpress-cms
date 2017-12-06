@@ -5,7 +5,7 @@
         </a>
     </li>
     <li *ngFor="let item of items">
-        <a class="list-item" routerLink="{{ item.path }}" *ngIf="item.data.nav">
+        <a class="list-item" routerLink="{{ item.path }}" *ngIf="item.data.type == 'page'">
             <span>{{ item.data.title }}</span>
         </a>
     </li>
