@@ -17,9 +17,8 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: example
-    # volumes:
-    #   - /var/lib/mysql
-    #   - ./backend/dump.sql:/docker-entrypoint-initdb.d/dump.sql
+    volumes:
+      - ./backend/backup.sql:/docker-entrypoint-initdb.d/dump.sql
 
   frontend:
     build: ./frontend

@@ -7,6 +7,10 @@ Example app using the following libraries:
 
 ## Installation
 
+If you need to use an existing database, place it at:
+
+    backend/backup.sql
+
 Start by running the docker container locally:
 
     docker-compose up
@@ -60,6 +64,14 @@ Or build with custom base url:
 To view the statically generated version locally use:
 
     npm run serve:prerender
+
+
+## Exporting the database
+
+Export database to a file, then copy file from container to local:
+
+    docker-compose exec mysql /usr/bin/mysqldump -u root --password=example --databases wordpress > backend/backup.sql
+    docker cp . "$(docker-compose ps -q mysql)":backup.sql
 
 
 ## Directory structure
