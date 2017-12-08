@@ -52,11 +52,12 @@ Ensure you have just backend and mysql running:
 
 In a second terminal window, generate a static build:
 
+    cd frontend
+    npm install
     npm run build:prerender
 
-Or build with custom base url:
+Or to build with custom base url:
 
-    cd frontend
     ng build --prod --base-href http://angular-universal-example.s3-website-us-east-1.amazonaws.com
     ng build --prod --app 1 --output-hashing=false --base-href http://angular-universal-example.s3-website-us-east-1.amazonaws.com
     npm run webpack:server && npm run generate:prerender
@@ -68,10 +69,9 @@ To view the statically generated version locally use:
 
 ## Exporting the database
 
-Export database to a file, then copy file from container to local:
+Export database to local:
 
     docker-compose exec mysql /usr/bin/mysqldump -u root --password=example --databases wordpress > backend/backup.sql
-    docker cp . "$(docker-compose ps -q mysql)":backup.sql
 
 
 ## Directory structure

@@ -1,6 +1,6 @@
 # Backend
 backend/wp-content/index.php
 backend/wp-content/plugins/index.php
-backend/wp-content/plugins/akismet
-backend/wp-content/plugins/hello.php
+backend/wp-content/plugins/advanced-custom-fields
+!backend/wp-content/plugins/angular-prerender
 backend/wp-content/themes
