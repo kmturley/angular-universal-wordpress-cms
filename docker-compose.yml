@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+
+  backend:
+    image: wordpress
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      WORDPRESS_DB_PASSWORD: example
+    volumes:
+      - ./backend/wp-content:/var/www/html/wp-content
+
+  mysql:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+    volumes:
+      - ./backend/backup.sql:/docker-entrypoint-initdb.d/dump.sql
+
+  frontend:
+    build: ./frontend
+    command: npm start
+    environment:
+      NODE_ENV: development
+    ports:
+      - 4200:4200
+    volumes:
+      - ./frontend:/usr/src/app:rw
+      - /usr/src/app/node_modules
