@@ -47,13 +47,16 @@ export class ApiService {
 
   get(url, id): Observable<any> {
     const key = makeStateKey(id);
+    console.log('transferState', this.transferState['store']['posts']);
     if (this.transferState.hasKey(key)) {
       const item = this.transferState.get(key, null);
+      console.log(id, 'transferState', item);
       // this.transferState.remove(key);
       return of(item);
     } else {
       return this.http.get(url).pipe(
         map(items => {
+          console.log(id, 'http', items);
           if (items['id']) {
             items = new Page(items);
           } else {
