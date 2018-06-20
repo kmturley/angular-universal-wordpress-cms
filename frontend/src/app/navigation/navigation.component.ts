@@ -11,7 +11,6 @@ import { AppRoutingService } from '../app-routing.service';
 })
 export class NavigationComponent implements OnInit {
     public items: Array<any>;
-    private root = 'http://localhost:8080';
 
     constructor(
         private router: Router,

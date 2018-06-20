@@ -1,19 +1,19 @@
-import { BrowserModule } from '@angular/platform-browser';
+import { BrowserModule, BrowserTransferStateModule } from '@angular/platform-browser';
 import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { HttpClientModule } from '@angular/common/http';
+import { TransferHttpCacheModule } from '@nguniversal/common';
+import { PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser, isPlatformServer } from '@angular/common';
+import { Inject } from '@angular/core';
 
 import { AppComponent } from './app.component';
 import { HomeComponent } from './home/home.component';
 import { NavigationComponent } from './navigation/navigation.component';
 import { AppRoutingModule } from './app-routing.module';
+
+import { ApiService } from './shared/api.service';
 import { AppRoutingService } from './app-routing.service';
-import { TransferHttpCacheModule } from '@nguniversal/common';
-
-import { PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser, isPlatformServer } from '@angular/common';
-import { Inject } from '@angular/core';
-
 
 export function init(routeService: AppRoutingService) {
   return () => routeService.getRoutes();
@@ -27,6 +27,7 @@ export function init(routeService: AppRoutingService) {
   ],
   imports: [
     BrowserModule.withServerTransition({appId: 'my-app'}),
+    BrowserTransferStateModule,
     HttpClientModule,
     AppRoutingModule,
     TransferHttpCacheModule,
@@ -38,6 +39,7 @@ export function init(routeService: AppRoutingService) {
       deps: [AppRoutingService],
       multi: true
     },
+    ApiService,
     AppRoutingService
   ],
   bootstrap: [AppComponent]

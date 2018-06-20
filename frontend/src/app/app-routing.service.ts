@@ -1,7 +1,9 @@
 import { Injectable, NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { ApiService } from './shared/api.service';
 import { Routes } from '@angular/router';
 import 'rxjs/add/operator/toPromise';
+
+import { environment } from '../environments/environment';
 
 /*
  * Wordpress API
@@ -11,16 +13,15 @@ import 'rxjs/add/operator/toPromise';
 
 @Injectable()
 export class AppRoutingService {
-  private root = 'http://localhost:8080';
   public routes: Routes = [];
 
   constructor(
-    private http: HttpClient
+    private api: ApiService
   ) { }
 
   addRoutes(items) {
     items.forEach(route => {
-      let path = route.link.slice(this.root.length + 1, -1);
+      let path = route.link.slice(environment.url.length + 1, -1);
       let type = route.type ? route.type : route.taxonomy
       if (path.startsWith('./')) {
         path = path.slice(2);
@@ -39,15 +40,15 @@ export class AppRoutingService {
 
   getRoutes() {
     return new Promise((resolve, reject) => {
-      this.http.get(this.root + '/wp-json/wp/v2/pages')
+      this.api.get(environment.url + '/wp-json/wp/v2/pages', 'pages')
         .toPromise()
         .then(res => {
           this.addRoutes(res);
-          this.http.get(this.root + '/wp-json/wp/v2/categories')
+          this.api.get(environment.url + '/wp-json/wp/v2/categories', 'categories')
             .toPromise()
             .then(res2 => {
               this.addRoutes(res2);
-              this.http.get(this.root + '/wp-json/wp/v2/posts')
+              this.api.get(environment.url + '/wp-json/wp/v2/posts', 'posts')
                 .toPromise()
                 .then(res3 => {
                   this.addRoutes(res3);
