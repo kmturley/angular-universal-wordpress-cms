@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { HomeComponent } from '../home/home.component';
 import { AppRoutingService } from '../app-routing.service';
 
 @Component({

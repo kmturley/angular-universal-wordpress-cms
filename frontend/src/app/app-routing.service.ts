@@ -22,7 +22,7 @@ export class AppRoutingService {
   addRoutes(items) {
     items.forEach(route => {
       let path = route.link.slice(environment.url.length + 1, -1);
-      let type = route.type ? route.type : route.taxonomy
+      let type = route.type ? route.type : route.taxonomy;
       if (path.startsWith('./')) {
         path = path.slice(2);
       }
@@ -35,6 +35,19 @@ export class AppRoutingService {
             type: type
           }
       });
+      // add child route
+      if (route.taxonomy === 'category') {
+        type = 'post';
+        this.routes.push({
+          pathMatch: 'full',
+          path: path + '/:id',
+          loadChildren: './' + type + '/' + type + '.module#' + type.charAt(0).toUpperCase() + type.slice(1) + 'Module',
+          data: {
+            title: route.title ? route.title.rendered : route.name,
+            type: type
+          }
+        });
+      }
     });
   }
 
@@ -48,12 +61,12 @@ export class AppRoutingService {
             .toPromise()
             .then(res2 => {
               this.addRoutes(res2);
-              this.api.get(environment.url + '/wp-json/wp/v2/posts', 'posts')
-                .toPromise()
-                .then(res3 => {
-                  this.addRoutes(res3);
+              // this.api.get(environment.url + '/wp-json/wp/v2/posts', 'posts')
+              //   .toPromise()
+              //   .then(res3 => {
+              //     this.addRoutes(res3);
                   resolve(this.routes);
-                }, reject);
+              //   }, reject);
             }, reject);
         }, reject);
     });
