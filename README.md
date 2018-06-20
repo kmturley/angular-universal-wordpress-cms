@@ -95,7 +95,7 @@ In a second terminal window, generate a static build:
 
 Or to build with custom base url:
 
-    ng build --configuration=production --base-href http://angular-universal-example.s3-website-us-east-1.amazonaws.com
+    ng build --configuration=production --base-href https://kmturley.github.io/angular-universal-wordpress-cms/frontend/dist/browser/
     ng run ng-universal-demo:server:production
     npm run webpack:server && npm run generate:prerender
 
