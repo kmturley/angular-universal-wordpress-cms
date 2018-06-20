@@ -43,6 +43,43 @@ And use the Wordpress API at:
     http://localhost:8080/wp-json/wp/v2/posts
 
 
+## Elastic Beanstalk
+
+Create an environment using the Elastic Beanstalk client:
+
+    cd backend
+    eb init --profile home
+    eb create master --cname wordpress-cms --database --single
+
+Go to the admin panel:
+
+    eb console
+    Configuration > Software Configuration
+
+Set the environment variables:
+
+    WORDPRESS_DB_HOST: 'XX.us-east-1.rds.amazonaws.com:3306'
+    WORDPRESS_DB_USER: 'XX'
+    WORDPRESS_DB_PASSWORD: 'XX'
+    WORDPRESS_DB_NAME: 'wordpress'
+
+Deploy a version using the Elastic Beanstalk client:
+
+    eb deploy
+
+Create an environment using the AWS client:
+
+    cd backend
+    aws configure --profile home
+    aws elasticbeanstalk create-environment --application-name wordpress-cms --cname-prefix wordpress-cms --environment-name master --solution-stack-name "64bit Amazon Linux 2017.09 v2.8.0 running Docker 17.06.2-ce"
+
+Deploy a version using the AWS client:
+
+    zip -r v2.zip .
+    aws s3 cp v1.zip s3://wordpress-cms.us-east-1.elasticbeanstalk.com/versions/
+    aws elasticbeanstalk create-application-version --application-name wordpress-cms --version-label v1 --description v1 --source-bundle S3Bucket="wordpress-cms.us-east-1.elasticbeanstalk.com",S3Key="versions/v1.zip" --auto-create-application
+    aws elasticbeanstalk update-environment --application-name wordpress-cms --environment-name master --version-label v1
+
 ## Deployment
 
 Ensure you have just backend and mysql running:

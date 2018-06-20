@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Http } from '@angular/http';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-page',
@@ -13,15 +13,15 @@ import { Http } from '@angular/http';
 export class PageComponent implements OnInit {
   private root = 'http://localhost:8080';
   private url = '/wp-json/wp/v2/posts';
-  public posts:Array<any>;
+  public posts: Array<any>;
 
   constructor(
-    private http: Http
+    private http: HttpClient
   ) { }
 
   ngOnInit() {
     this.http.get(this.root + this.url).subscribe(res => {
-      this.posts = res.json();
+      this.posts = res as Array<any>;
     });
   }
 

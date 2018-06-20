@@ -1,5 +1,5 @@
 import { Injectable, NgModule } from '@angular/core';
-import { Http } from '@angular/http';
+import { HttpClient } from '@angular/common/http';
 import { Routes } from '@angular/router';
 import 'rxjs/add/operator/toPromise';
 
@@ -15,7 +15,7 @@ export class AppRoutingService {
   public routes: Routes = [];
 
   constructor(
-    private http: Http
+    private http: HttpClient
   ) { }
 
   addRoutes(items) {
@@ -42,15 +42,15 @@ export class AppRoutingService {
       this.http.get(this.root + '/wp-json/wp/v2/pages')
         .toPromise()
         .then(res => {
-          this.addRoutes(res.json());
+          this.addRoutes(res);
           this.http.get(this.root + '/wp-json/wp/v2/categories')
             .toPromise()
-            .then(res => {
-              this.addRoutes(res.json());
+            .then(res2 => {
+              this.addRoutes(res2);
               this.http.get(this.root + '/wp-json/wp/v2/posts')
                 .toPromise()
-                .then(res => {
-                  this.addRoutes(res.json());
+                .then(res3 => {
+                  this.addRoutes(res3);
                   resolve(this.routes);
                 }, reject);
             }, reject);

@@ -1,13 +1,14 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { HttpModule } from '@angular/http';
+import { HttpClientModule } from '@angular/common/http';
 
 import { AppComponent } from './app.component';
 import { HomeComponent } from './home/home.component';
 import { NavigationComponent } from './navigation/navigation.component';
 import { AppRoutingModule } from './app-routing.module';
 import { AppRoutingService } from './app-routing.service';
+import { TransferHttpCacheModule } from '@nguniversal/common';
 
 import { PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser, isPlatformServer } from '@angular/common';
@@ -26,8 +27,9 @@ export function init(routeService: AppRoutingService) {
   ],
   imports: [
     BrowserModule.withServerTransition({appId: 'my-app'}),
-    HttpModule,
-    AppRoutingModule
+    HttpClientModule,
+    AppRoutingModule,
+    TransferHttpCacheModule,
   ],
   providers: [
     {
