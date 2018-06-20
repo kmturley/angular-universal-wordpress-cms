@@ -3,20 +3,27 @@ version: '3'
 services:
 
   backend:
-    image: wordpress
+    image: wordpress:latest
     restart: always
     ports:
       - 8080:80
     environment:
-      WORDPRESS_DB_PASSWORD: example
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
     volumes:
       - ./backend/wp-content:/var/www/html/wp-content
 
   mysql:
     image: mysql:5.7
     restart: always
+    ports:
+      - 3306:3306
     environment:
-      MYSQL_ROOT_PASSWORD: example
+      MYSQL_ROOT_PASSWORD: somewordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
     volumes:
       - ./backend/backup.sql:/docker-entrypoint-initdb.d/dump.sql
 
