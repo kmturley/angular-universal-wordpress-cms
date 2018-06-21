@@ -26,6 +26,13 @@ let previousRender = Promise.resolve();
 
 getPaths().then((ROUTES: any[]) => {
   console.log('ROUTES', ROUTES);
+
+  // create json folder
+  const jsonPath = join(BROWSER_FOLDER, 'json');
+  if (!existsSync(jsonPath)) {
+    mkdirSync(jsonPath);
+  }
+
   // Iterate each route path
   ROUTES.forEach(route => {
     const fullPath = join(BROWSER_FOLDER, route);
@@ -42,6 +49,27 @@ getPaths().then((ROUTES: any[]) => {
       extraProviders: [
         provideModuleMap(LAZY_MODULE_MAP)
       ]
-    })).then(html => writeFileSync(join(fullPath, 'index.html'), html));
+    })).then(html => {
+      writeFileSync(join(fullPath, 'index.html'), html);
+
+      // write a json file
+      // TODO write a factory to get the data directly, rather than parsing html
+      const regex = new RegExp('(?:<script id="my-app-state" type="application\/json">)(.*?)(?:</script>)', 'g');
+      const json = JSON.parse(unescapeHtml(html.split(regex)[1]));
+      Object.keys(json).forEach(item => {
+        writeFileSync(join(jsonPath, item + '.json'), JSON.stringify(json[item]));
+      });
+    });
   });
 });
+
+export function unescapeHtml(text: string): string {
+  const escapedText: {[k: string]: string} = {
+    '&a;': '&',
+    '&q;': '"',
+    '&s;': '\'',
+    '&l;': '<',
+    '&g;': '>',
+  };
+  return text.replace(/(&a;)|(&q;)|(&s;)|(&l;)|(&g;)/g, s => escapedText[s]);
+}

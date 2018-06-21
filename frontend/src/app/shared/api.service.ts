@@ -1,8 +1,8 @@
 import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { isPlatformServer } from '@angular/common';
 import { makeStateKey, TransferState } from '@angular/platform-browser';
-import { first, tap, map } from 'rxjs/operators';
+import { first, tap, map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs/observable/of';
 import { Observable } from 'rxjs/Observable';
 
@@ -47,26 +47,33 @@ export class ApiService {
 
   get(url, id): Observable<any> {
     const key = makeStateKey(id);
-    console.log('transferState', this.transferState['store']['posts']);
+    console.log('get', url, id);
+
+    // console.log('transferState', this.transferState['store']['posts']);
     if (this.transferState.hasKey(key)) {
       const item = this.transferState.get(key, null);
-      console.log(id, 'transferState', item);
+      // console.log(id, 'transferState', item);
       // this.transferState.remove(key);
       return of(item);
     } else {
-      return this.http.get(url).pipe(
-        map(items => {
-          console.log(id, 'http', items);
-          if (items['id']) {
-            items = new Page(items);
-          } else {
-            Object.keys(items).forEach(item => {
-              items[item] = new Page(items[item]);
-            });
-          }
-          // console.log(id, items);
-          this.transferState.set(key, items);
-          return items;
+      return this.http.get(`./json/${id}.json`).pipe(
+        catchError((err: any): any => {
+          console.log('err', err);
+          return this.http.get(url).pipe(
+            map(items => {
+              // console.log(id, 'http', items);
+              if (items['id']) {
+                items = new Page(items);
+              } else {
+                Object.keys(items).forEach(item => {
+                  items[item] = new Page(items[item]);
+                });
+              }
+              // console.log(id, items);
+              this.transferState.set(key, items);
+              return items;
+            })
+          );
         })
       );
     }

@@ -1,7 +1,6 @@
 import { BrowserModule, BrowserTransferStateModule } from '@angular/platform-browser';
 import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
-import { TransferHttpCacheModule } from '@nguniversal/common';
 import { PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser, isPlatformServer } from '@angular/common';
 import { Inject } from '@angular/core';
@@ -28,8 +27,7 @@ export function init(routeService: AppRoutingService) {
     BrowserModule.withServerTransition({appId: 'my-app'}),
     BrowserTransferStateModule,
     HttpClientModule,
-    AppRoutingModule,
-    TransferHttpCacheModule,
+    AppRoutingModule
   ],
   providers: [
     {

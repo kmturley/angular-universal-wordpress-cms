@@ -22,7 +22,7 @@ export class NavigationComponent implements OnInit {
         this.items.forEach(route => {
             routerConfig.push(route);
         });
-        console.log('getRoutes', routerConfig);
+        // console.log('getRoutes', routerConfig);
         this.router.resetConfig(routerConfig);
     }
 
