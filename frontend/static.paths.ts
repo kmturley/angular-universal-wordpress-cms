@@ -1,6 +1,6 @@
-const request = require('request');
+const rp = require('request-promise');
 
-const root = 'http://localhost:8080';
+import { environment } from './src/environments/environment.prod';
 const routes = ['/'];
 
 /*
@@ -11,7 +11,7 @@ const routes = ['/'];
 
 function addPaths(items) {
   items.forEach(item => {
-    let path = item.link.slice(root.length + 1, -1);
+    let path = item.link.slice(environment.url.length + 1, -1);
     if (path.startsWith('./')) {
       path = path.slice(2);
     }
@@ -20,19 +20,14 @@ function addPaths(items) {
 }
 
 export function getPaths() {
-  return new Promise(function (resolve, reject) {
-    request(root + '/wp-json/wp/v2/pages', { json: true }, (err, res, pages) => {
-      if (err) return reject(err);
-      addPaths(pages);
-      request(root + '/wp-json/wp/v2/categories', { json: true }, (err, res, categories) => {
-        if (err) return reject(err);
-        addPaths(categories);
-        request(root + '/wp-json/wp/v2/posts', { json: true }, (err, res, posts) => {
-          if (err) return reject(err);
-          addPaths(posts);
-          resolve(routes);
-        });
-      });
+  return Promise.all([
+    rp({uri: environment.url + '/wp-json/wp/v2/pages', json: true}),
+    rp({uri: environment.url + '/wp-json/wp/v2/categories', json: true}),
+    rp({uri: environment.url + '/wp-json/wp/v2/posts', json: true})
+  ]).then((values) => {
+    values.forEach((value) => {
+      addPaths(value);
     });
-  })
+    return routes;
+  });
 }

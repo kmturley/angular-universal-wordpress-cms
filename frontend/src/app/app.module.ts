@@ -44,9 +44,9 @@ export function init(routeService: AppRoutingService) {
 export class AppModule {
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
     if (isPlatformBrowser(this.platformId)) {
-      var hash = location.hash.substring(1);
+      const hash = location.hash.substring(1);
       if (hash.length > 1) {
-        history.pushState({}, "entry page", hash);
+        history.pushState({}, 'entry page', hash);
       }
     }
   }

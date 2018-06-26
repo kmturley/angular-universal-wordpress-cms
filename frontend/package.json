@@ -45,6 +45,7 @@
     "@nguniversal/express-engine": "^6.0.0",
     "@nguniversal/module-map-ngfactory-loader": "^6.0.0",
     "core-js": "^2.4.1",
+    "request-promise": "^4.2.2",
     "rxjs": "6.0.0",
     "rxjs-compat": "^6.2.1",
     "webpack-cli": "^2.0.14",

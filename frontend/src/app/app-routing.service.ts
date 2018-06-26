@@ -52,23 +52,14 @@ export class AppRoutingService {
   }
 
   getRoutes() {
-    return new Promise((resolve, reject) => {
-      this.api.get(environment.url + '/wp-json/wp/v2/pages', 'pages')
-        .toPromise()
-        .then(res => {
-          this.addRoutes(res);
-          this.api.get(environment.url + '/wp-json/wp/v2/categories', 'categories')
-            .toPromise()
-            .then(res2 => {
-              this.addRoutes(res2);
-              // this.api.get(environment.url + '/wp-json/wp/v2/posts', 'posts')
-              //   .toPromise()
-              //   .then(res3 => {
-              //     this.addRoutes(res3);
-                  resolve(this.routes);
-              //   }, reject);
-            }, reject);
-        }, reject);
+    return Promise.all([
+      this.api.get(environment.url + '/wp-json/wp/v2/pages', 'pages').toPromise(),
+      this.api.get(environment.url + '/wp-json/wp/v2/categories', 'categories').toPromise()
+    ]).then((values) => {
+      values.forEach((value) => {
+        this.addRoutes(value);
+      });
+      return this.routes;
     });
   }
 }
