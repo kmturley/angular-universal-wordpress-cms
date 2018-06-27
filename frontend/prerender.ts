@@ -60,14 +60,3 @@ getPaths().then((ROUTES: any[]) => {
     });
   });
 });
-
-export function unescapeHtml(text: string): string {
-  const escapedText: {[k: string]: string} = {
-    '&a;': '&',
-    '&q;': '"',
-    '&s;': '\'',
-    '&l;': '<',
-    '&g;': '>',
-  };
-  return text.replace(/(&a;)|(&q;)|(&s;)|(&l;)|(&g;)/g, s => escapedText[s]);
-}
