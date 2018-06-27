@@ -49,14 +49,13 @@ getPaths().then((ROUTES: any[]) => {
       extraProviders: [
         provideModuleMap(LAZY_MODULE_MAP)
       ]
-    })).then((data: { output: string, document: object }) => {
+    })).then((res: { output: string, data: object }) => {
       // write html file
-      writeFileSync(join(fullPath, 'index.html'), data.output);
+      writeFileSync(join(fullPath, 'index.html'), res.output);
 
       // write json files from TransferState objects
-      const json = JSON.parse(unescapeHtml(data.document['byId']['my-app-state']['_firstChild']['_data']));
-      Object.keys(json).forEach(item => {
-        writeFileSync(join(jsonPath, item + '.json'), JSON.stringify(json[item]));
+      Object.keys(res.data).forEach(item => {
+        writeFileSync(join(jsonPath, item + '.json'), JSON.stringify(res.data[item]));
       });
     });
   });

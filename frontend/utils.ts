@@ -37,23 +37,22 @@ the server-rendered app can be properly bootstrapped into a client app.`);
 
           // Run any BEFORE_APP_SERIALIZED callbacks just before rendering to string.
           const callbacks = moduleRef.injector.get(BEFORE_APP_SERIALIZED, null);
+          let data = null;
           if (callbacks) {
             for (const callback of callbacks) {
               try {
-                callback();
+                data = callback();
               } catch (e) {
                 // Ignore exceptions.
                 console.warn('Ignoring BEFORE_APP_SERIALIZED Exception: ', e);
               }
             }
           }
-          // console.log(platformState['_doc']['byId']['my-app-state']['_firstChild']['_data']); // ['byId']['my-app-state']
           const output = platformState.renderToString();
-          const document = platformState.getDocument();
           platform.destroy();
           return {
             output: output,
-            document: document
+            data: data
           };
         });
   });
