@@ -54,24 +54,22 @@ export class ApiService {
       return of(item);
     } else {
       if (environment.production && isPlatformBrowser(this.platformId)) {
-        console.log('get', `./json/${id}.json`);
-        return this.http.get(`./json/${id}.json`);
-      } else {
-        console.log('get', url);
-        return this.http.get(url).pipe(
-          map(items => {
-            if (items['id']) {
-              items = new Page(items);
-            } else {
-              Object.keys(items).forEach(item => {
-                items[item] = new Page(items[item]);
-              });
-            }
-            this.transferState.set(key, items);
-            return items;
-          })
-        );
+        url = `./json/${id}.json`;
       }
+      console.log('get', url);
+      return this.http.get(url).pipe(
+        map(items => {
+          if (items['id']) {
+            items = new Page(items);
+          } else {
+            Object.keys(items).forEach(item => {
+              items[item] = new Page(items[item]);
+            });
+          }
+          this.transferState.set(key, items);
+          return items;
+        })
+      );
     }
   }
 }
