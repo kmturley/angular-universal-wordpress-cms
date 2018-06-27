@@ -10,7 +10,7 @@ enableProdMode();
 
 // Import module map for lazy loading
 import {provideModuleMap} from '@nguniversal/module-map-ngfactory-loader';
-import {renderModuleFactory} from '@angular/platform-server';
+import {renderModuleFactory} from './utils';
 import {getPaths} from './static.paths';
 
 // * NOTE :: leave this as require() since this file is built Dynamically from webpack
@@ -49,13 +49,14 @@ getPaths().then((ROUTES: any[]) => {
       extraProviders: [
         provideModuleMap(LAZY_MODULE_MAP)
       ]
-    })).then(html => {
-      writeFileSync(join(fullPath, 'index.html'), html);
+    })).then((data: { output: string, document: object }) => {
+      // write html file
+      writeFileSync(join(fullPath, 'index.html'), data.output);
 
-      // write a json file
-      // TODO write a factory to get the data directly, rather than parsing html
-      const regex = new RegExp('(?:<script id="my-app-state" type="application\/json">)(.*?)(?:</script>)', 'g');
-      const json = JSON.parse(unescapeHtml(html.split(regex)[1]));
+      console.log(data.output);
+
+      // write json files from TransferState objects
+      const json = JSON.parse(unescapeHtml(data.document['byId']['my-app-state']['_firstChild']['_data']));
       Object.keys(json).forEach(item => {
         writeFileSync(join(jsonPath, item + '.json'), JSON.stringify(json[item]));
       });
