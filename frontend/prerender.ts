@@ -53,8 +53,6 @@ getPaths().then((ROUTES: any[]) => {
       // write html file
       writeFileSync(join(fullPath, 'index.html'), data.output);
 
-      console.log(data.output);
-
       // write json files from TransferState objects
       const json = JSON.parse(unescapeHtml(data.document['byId']['my-app-state']['_firstChild']['_data']));
       Object.keys(json).forEach(item => {
