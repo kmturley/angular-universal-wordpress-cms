@@ -11,138 +11,191 @@ stages:
   - deploy
   - verify
 
-# lint_backend:
-#   image: python:2.7
-#   stage: lint
-#   script:
-#    - export PYTHONPATH=$PWD/backend/lib:$PYTHONPATH
-#    - pip install pylint Flask flask-talisman
-#    - find backend -path backend/lib -prune -o -iname "*.py" |xargs pylint -r y
+lint_backend:
+  image: php:7.2
+  stage: lint
+  script:
+   - find backend -name "*.php" -print0 | xargs -0 -n1 -P8 php -l
 
-# lint_frontend:
-#   image: node
-#   stage: lint
-#   script:
-#    - cd frontend
-#    - npm install standard
-#    - npm run lint
+lint_frontend:
+  image: node:8.9.3
+  stage: lint
+  script:
+   - cd frontend
+   - npm install tslint eslint
+   - npm run lint
 
-# test_backend:
-#   image: python
-#   stage: test
-#   script:
-#     - export PYTHONPATH=$PWD/backend/lib:$PYTHONPATH
-#     - pip install Flask flask-talisman
-#     - python -m unittest discover -s backend
+test_backend:
+  image: php:7.2
+  stage: test
+  script:
+    - cd backend
+    - curl --location --output /usr/local/bin/phpunit https://phar.phpunit.de/phpunit.phar
+    - chmod +x /usr/local/bin/phpunit
+    - phpunit tests
 
-# test_frontend:
-#   image: node
-#   stage: test
-#   script:
-#    - cd frontend
-#    - npm install mocha
-#    - npm test
-
-# build_backend:
-#   image: python
-#   stage: build
-#   script:
-#    - pip install -t backend/lib -r backend/requirements.txt
-#    - export PYTHONPATH=$PWD/backend/lib:$PYTHONPATH
-#   artifacts:
-#     expire_in: 1 hour
-#     paths:
-#       - backend/
-#       - backend/libs
-
-build_frontend:
-  image: node
-  stage: build
+test_frontend:
+  image: node:8.9.3
+  stage: test
+  before_script:
+   - apt-get update
+   - apt-get install -yq gconf-service libasound2 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgcc1 libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 ca-certificates fonts-liberation libappindicator1 libnss3 lsb-release xdg-utils wget
   script:
    - cd frontend
    - npm install
-   - ng build --prod --base-href https://$CI_BUILD_REF_SLUG-$PROJECT_NAME.us-east-1.elasticbeanstalk.com
-   - ng build --prod --app 1 --output-hashing=false --base-href https://$CI_BUILD_REF_SLUG-$PROJECT_NAME.us-east-1.elasticbeanstalk.com
+   - npm test
+
+build_backend:
+  image: php:7.2
+  stage: build
+  only:
+   - dev
+   - test
+   - master
+  script:
+   - echo 'done'
+  artifacts:
+    expire_in: 1 hour
+    paths:
+      - backend/
+
+build_frontend:
+  image: node:8.9.3
+  stage: build
+  only:
+   - dev
+   - test
+   - master
+  script:
+   - cd frontend
+   - npm install
+   - node_modules/.bin/ng build --configuration=$BITBUCKET_BRANCH --base-href https://$CI_BUILD_REF_SLUG-$PROJECT_NAME.us-east-1.elasticbeanstalk.com
+   - node_modules/.bin/ng run ng-universal-demo:server:production
    - npm run webpack:server && npm run generate:prerender
   artifacts:
     expire_in: 1 hour
     paths:
       - frontend/dist
 
-deploy:
-  image: paulodiovani/aws-eb-cli
+deploy_backend:
+  image: python:2.7
   stage: deploy
+  only:
+   - dev
+   - test
+   - master
   environment:
-    name: $CI_BUILD_REF_NAME
-    url: https://$CI_BUILD_REF_SLUG-$PROJECT_NAME.us-east-1.elasticbeanstalk.com
+    name: $CI_BUILD_REF_NAME/backend
+    url: http://$CI_BUILD_REF_SLUG-$PROJECT_NAME.$AWS_DEFAULT_REGION.elasticbeanstalk.com
   script:
     - cd backend
-    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-    - aws configure set aws_default_region $AWS_DEFAULT_REGION
-    - aws configure set aws_default_output $AWS_DEFAULT_OUTPUT
-    - eb deploy
+    - pip install awscli awsebcli --upgrade --user
+    - touch ~/.bash_profile
+    - export PATH=~/.local/bin:$PATH
+    - source ~/.bash_profile
+    - eb init $PROJECT_NAME --region $AWS_DEFAULT_REGION --platform "64bit Amazon Linux 2017.09 v2.8.3 running Docker 17.06.2-ce" --quiet
+    - eb deploy $CI_BUILD_REF_SLUG-$PROJECT_NAME
+
+deploy_frontend:
+  image: python:2.7
+  stage: deploy
+  only:
+   - dev
+   - test
+   - master
+  environment:
+    name: $CI_BUILD_REF_NAME/frontend
+    url: http://$CI_BUILD_REF_SLUG-$PROJECT_NAME.s3-website-$AWS_DEFAULT_REGION.amazonaws.com
+  script:
+    - cd frontend
+    - pip install awscli awsebcli --upgrade --user
+    - touch ~/.bash_profile
+    - export PATH=~/.local/bin:$PATH
+    - source ~/.bash_profile
+    - aws s3 cp ./dist/browser s3://$CI_BUILD_REF_SLUG-$PROJECT_NAME --recursive --acl public-read
 
 verify_accessibility:
-  image: python
+  image: python:2.7
   stage: verify
+  only:
+   - dev
+   - test
+   - master
   services:
   - name: kmturley/lighthouse-ci
   script:
-    - export PYTHONPATH=$PWD/backend/lib:$PYTHONPATH
+    - export PYTHONPATH=$PWD/qa/env/lib:$PYTHONPATH
     - pip install -r qa/accessibility/requirements.txt
-    - BASE_URL="https://$CI_BUILD_REF_SLUG-$GAE_PROJECT.us-east-1.elasticbeanstalk.com" LIGHTHOUSE_IMAGE="http://kmturley__lighthouse-ci:8085" python qa/accessibility/page_runner.py
-    - BASE_URL="https://$CI_BUILD_REF_SLUG-$GAE_PROJECT.us-east-1.elasticbeanstalk.com" FILE_NAME="index" behave qa/accessibility/features
+    - BASE_URL="http://$CI_BUILD_REF_SLUG-$PROJECT_NAME.s3-website-$AWS_DEFAULT_REGION.amazonaws.com" LIGHTHOUSE_IMAGE="http://kmturley__lighthouse-ci:8085" python qa/accessibility/page_runner.py
+    - BASE_URL="http://$CI_BUILD_REF_SLUG-$PROJECT_NAME.s3-website-$AWS_DEFAULT_REGION.amazonaws.com" FILE_NAME="index" behave qa/accessibility/features
 
 verify_analytics:
-  image: python
+  image: python:2.7
   stage: verify
+  only:
+   - dev
+   - test
+   - master
   services:
     - selenium/standalone-chrome:3.4
   script:
-    - export PYTHONPATH=$PWD/backend/lib:$PYTHONPATH
+    - export PYTHONPATH=$PWD/qa/env/lib:$PYTHONPATH
     - pip install -r qa/analytics/requirements.txt
-    - BASE_URL="https://$CI_BUILD_REF_SLUG-$GAE_PROJECT.us-east-1.elasticbeanstalk.com" SELENIUM="http://selenium__standalone-chrome:4444/wd/hub" DRIVER=remote_ga_chrome behave qa/analytics/features
+    - BASE_URL="http://$CI_BUILD_REF_SLUG-$PROJECT_NAME.s3-website-$AWS_DEFAULT_REGION.amazonaws.com" SELENIUM="http://selenium__standalone-chrome:4444/wd/hub" DRIVER=remote_ga_chrome behave qa/analytics/features
 
 verify_functionality:
-  image: python
+  image: python:2.7
   stage: verify
+  only:
+   - dev
+   - test
+   - master
   services:
     - selenium/standalone-chrome:3.4
   script:
-    - export PYTHONPATH=$PWD/backend/lib:$PYTHONPATH
+    - export PYTHONPATH=$PWD/qa/env/lib:$PYTHONPATH
     - pip install -r qa/functional/requirements.txt
-    - BASE_URL="https://$CI_BUILD_REF_SLUG-$GAE_PROJECT.us-east-1.elasticbeanstalk.com" SELENIUM="http://selenium__standalone-chrome:4444/wd/hub" DRIVER="headless_chrome" behave qa/functional/features
+    - BASE_URL="http://$CI_BUILD_REF_SLUG-$PROJECT_NAME.s3-website-$AWS_DEFAULT_REGION.amazonaws.com" SELENIUM="http://selenium__standalone-chrome:4444/wd/hub" DRIVER="headless_chrome" behave qa/functional/features
 
 verify_performance:
   image: python:2.7
   stage: verify
+  only:
+   - dev
+   - test
+   - master
   script:
-    - export PYTHONPATH=$PWD/backend/lib:$PYTHONPATH
-    # - 'if [ -z "$NIGHTLY_TEST" ]; then echo "Skipping performance test." && exit 0; fi'
+    - export PYTHONPATH=$PWD/qa/env/lib:$PYTHONPATH
     - pip install -r qa/performance/requirements.txt
-    - locust --host=https://$CI_BUILD_REF_SLUG-$GAE_PROJECT.us-east-1.elasticbeanstalk.com --clients=2 --hatch-rate=1 --num-request=4 --no-web -f qa/performance/locustfile.py
+    - locust --host=http://$CI_BUILD_REF_SLUG-$PROJECT_NAME.s3-website-$AWS_DEFAULT_REGION.amazonaws.com --clients=2 --hatch-rate=1 --num-request=4 --no-web -f qa/performance/locustfile.py
 
 verify_security:
   image: python:2.7
   stage: verify
+  only:
+   - dev
+   - test
+   - master
   services:
   - name: selenium/standalone-chrome:3.4
   - name: owasp/zap2docker-stable
     command: ["zap.sh", "-daemon", "-port", "8080", "-host", "0.0.0.0", "-config", "api.key=0123456789", "-config", "api.addrs.addr.name=.*", "-config", "api.addrs.addr.regex=true", "-config", "scanner.strength=INSANE", "-Xmx1024m"]
   script:
-    - export PYTHONPATH=$PWD/backend/lib:$PYTHONPATH
-    # - 'if [ -z "$NIGHTLY_TEST" ]; then echo "Skipping security test." && exit 0; fi'
+    - export PYTHONPATH=$PWD/qa/env/lib:$PYTHONPATH
     - pip install -r qa/security/requirements.txt
-    - BASE_URL="https://$CI_BUILD_REF_SLUG-$GAE_PROJECT.us-east-1.elasticbeanstalk.com" ZAP_ADDRESS="http://owasp__zap2docker-stable:8080" ZAP_API_KEY=0123456789 python qa/security/zap_scanner.py
-    - BASE_URL="https://$CI_BUILD_REF_SLUG-$GAE_PROJECT.us-east-1.elasticbeanstalk.com" SELENIUM="http://selenium__standalone-chrome:4444/wd/hub" DRIVER=headless_chrome behave qa/security/features
+    - BASE_URL="http://$CI_BUILD_REF_SLUG-$PROJECT_NAME.s3-website-$AWS_DEFAULT_REGION.amazonaws.com" ZAP_ADDRESS="http://owasp__zap2docker-stable:8080" ZAP_API_KEY=0123456789 python qa/security/zap_scanner.py
+    - BASE_URL="http://$CI_BUILD_REF_SLUG-$PROJECT_NAME.s3-website-$AWS_DEFAULT_REGION.amazonaws.com" SELENIUM="http://selenium__standalone-chrome:4444/wd/hub" DRIVER=headless_chrome behave qa/security/features
 
 verify_visual:
   image: python:2.7
   stage: verify
+  only:
+   - dev
+   - test
+   - master
   services:
     - selenium/standalone-chrome:3.4
   script:
-    - export PYTHONPATH=$PWD/backend/lib:$PYTHONPATH
+    - export PYTHONPATH=$PWD/qa/env/lib:$PYTHONPATH
     - pip install -r qa/visual/requirements.txt
-    - BASE_URL="https://$CI_BUILD_REF_SLUG-$GAE_PROJECT.us-east-1.elasticbeanstalk.com" SELENIUM="http://selenium__standalone-chrome:4444/wd/hub" API_KEY=$EYES_API_KEY DRIVER="headless_chrome" behave qa/visual/features
+    - BASE_URL="http://$CI_BUILD_REF_SLUG-$PROJECT_NAME.s3-website-$AWS_DEFAULT_REGION.amazonaws.com" SELENIUM="http://selenium__standalone-chrome:4444/wd/hub" API_KEY=$EYES_API_KEY DRIVER="headless_chrome" behave qa/visual/features

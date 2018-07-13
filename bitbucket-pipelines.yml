@@ -1,0 +1,92 @@
+image: kmturley/python-appengine-node
+
+pipelines:
+  default:
+    - step:
+        caches:
+          - node
+          - pip
+        services:
+          - lighthouse
+          - selenium
+          - zap
+        script:
+          - echo 'install system packages' &&
+            apt-get update -yq &&
+            apt-get install -yq php5-common libapache2-mod-php5 php5-cli
+
+          - echo 'lint_backend' &&
+            find backend -name "*.php" -print0 | xargs -0 -n1 -P8 php -l
+
+          - echo 'lint_frontend' &&
+            cd frontend &&
+            npm install tslint eslint &&
+            npm run lint &&
+            cd ..
+
+          - echo 'test_backend' &&
+            cd backend &&
+            curl https://phar.phpunit.de/phpunit-5.phar -L -o phpunit.phar &&
+            chmod +x phpunit.phar &&
+            mv phpunit.phar /usr/local/bin/phpunit &&
+            phpunit tests &&
+            cd ..
+
+          - echo 'test_frontend' &&
+            cd frontend &&
+            npm install &&
+            npm test &&
+            cd ..
+
+          - echo 'build_backend' &&
+            echo 'done'
+
+          - echo 'build_frontend' &&
+            cd frontend &&
+            npm install &&
+            node_modules/.bin/ng build --configuration=$BITBUCKET_BRANCH --base-href https://$BITBUCKET_BRANCH-dot-$GAE_PROJECT.appspot.com &&
+            node_modules/.bin/ng run ng-universal-demo:server:production &&
+            npm run webpack:server && npm run generate:prerender &&
+            cd ..
+
+          - echo 'deploy_frontend' &&
+            echo "$GAE_KEY" > /tmp/gae_key.json &&
+            gcloud config set project $GAE_PROJECT &&
+            gcloud auth activate-service-account --key-file /tmp/gae_key.json &&
+            gcloud --quiet app deploy frontend/app.static.yaml --version $BITBUCKET_BRANCH --no-promote &&
+            rm /tmp/gae_key.json
+
+          - echo 'verify_accessibility' &&
+            pip install -r qa/accessibility/requirements.txt &&
+            BASE_URL="https://$BITBUCKET_BRANCH-dot-$GAE_PROJECT.appspot.com" LIGHTHOUSE_IMAGE="https://127.0.0.1:8085" python qa/accessibility/page_runner.py &&
+            BASE_URL="https://$BITBUCKET_BRANCH-dot-$GAE_PROJECT.appspot.com" FILE_NAME="index" behave qa/accessibility/features
+
+          - echo 'verify_analytics' &&
+            pip install -r qa/analytics/requirements.txt &&
+            BASE_URL="https://$BITBUCKET_BRANCH-dot-$GAE_PROJECT.appspot.com" SELENIUM="https://127.0.0.1:4444/wd/hub" DRIVER=gitlab_chrome behave qa/analytics/features
+
+          - echo 'verify_functionality' &&
+            pip install -r qa/functional/requirements.txt &&
+            BASE_URL="https://$BITBUCKET_BRANCH-dot-$GAE_PROJECT.appspot.com" SELENIUM="https://127.0.0.1:4444/wd/hub" DRIVER="headless_chrome" behave qa/functional/features
+
+          - echo 'verify_performance' &&
+            pip install -r qa/performance/requirements.txt &&
+            locust --host=https://$BITBUCKET_BRANCH-dot-$GAE_PROJECT.appspot.com --clients=2 --hatch-rate=1 --num-request=4 --no-web -f qa/performance/locustfile.py
+
+          - echo 'verify_security' &&
+            pip install -r qa/security/requirements.txt &&
+            BASE_URL="https://$BITBUCKET_BRANCH-dot-$GAE_PROJECT.appspot.com" ZAP_ADDRESS="https://127.0.0.1:8080" ZAP_API_KEY=0123456789 python qa/security/zap_scanner.py &&
+            BASE_URL="https://$BITBUCKET_BRANCH-dot-$GAE_PROJECT.appspot.com" SELENIUM="https://127.0.0.1:4444/wd/hub" DRIVER=headless_chrome behave qa/security/features
+
+          - echo 'verify_visual' &&
+            pip install -r qa/visual/requirements.txt &&
+            BASE_URL="https://$BITBUCKET_BRANCH-dot-$GAE_PROJECT.appspot.com" SELENIUM="https://127.0.0.1:4444/wd/hub" API_KEY=$EYES_API_KEY DRIVER="headless_chrome" behave qa/visual/features
+
+definitions:
+  services:
+    lighthouse:
+      image: kmturley/lighthouse-ci
+    selenium:
+      image: selenium/standalone-chrome:3.4
+    zap:
+      image: owasp/zap2docker-stable
